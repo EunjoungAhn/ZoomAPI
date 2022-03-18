@@ -42,7 +42,6 @@ public JsonResult ZoomMeetingCreateUpdate(string LectureSeq, string AccountSeq, 
         만약 userId를 넣어도 'code: 1001' 값이 확인 된다면, zoom 유료계정 관리자 메뉴에서 사용자를 추가해 주어야 합니다.
         */
 
-        //var client = new RestClient("https://api.zoom.us/v2/users/dev@exmaru.com/meetings");
         //var UserId = "";
         var createZoom = "https://api.zoom.us/v2/users/"+ UserId + "/meetings";
         var client = new RestClient(createZoom);
