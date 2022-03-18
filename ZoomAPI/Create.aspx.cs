@@ -23,12 +23,12 @@ namespace ZoomAPI
         {
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var now = DateTime.UtcNow;
-            var apiSecret = "frKvEd3UaGl4RY7PgRQ3tyklQoOXQ0ujdh9d";
+            var apiSecret = "";
             byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Issuer = "R9pXOmNLR7K_b4ecxM1gCg",
+                Issuer = "api key",
                 Expires = now.AddSeconds(300),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256),
             };
@@ -36,7 +36,7 @@ namespace ZoomAPI
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            var client = new RestClient("https://api.zoom.us/v2/users/dev@exmaru.com/meetings");
+            var client = new RestClient("https://api.zoom.us/v2/users/zoom 사용 이메일/meetings");
             var request = new RestRequest(Method.POST);
             request.RequestFormat = DataFormat.Json;
             request.AddJsonBody(new { topic = "Meeting with Ussain", duration = "10", start_time = "2021-04-20T05:00:00", type = "2" });
