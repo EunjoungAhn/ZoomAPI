@@ -4,7 +4,7 @@ C# zoom api, meeting create 관련
 ```C#
 //C# Asp.net Core 버전 입니다.
 //zoom 미팅 생성 - 수업 예정인 강의seq, 수업을 진행할 강사의 seq, 수업 제목, zoom으로 회의를 개설한 zoom email
-[Route("Api/Create/Zoom/meeting")]
+[Route("Api/Create/Zoom/meeting")] //인자로 받는 값은 zoom api에서 필요한 필수 값은 아니며, 사용자에게 받아서 적용하기 위해 추가 하였습니다.
 public JsonResult ZoomMeetingCreateUpdate(string LectureSeq, string AccountSeq, string LectureTitle, string UserId)
 {
     var result = new ReturnValue();
