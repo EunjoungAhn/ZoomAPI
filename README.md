@@ -178,7 +178,7 @@ public JsonResult ZoomTest()
     var test = new RestClient(zoomTest);
     var request = new RestRequest(Method.GET);
     request.AddHeader("content-type", "application/json");
-    request.AddHeader($"authorization", $"Bearer "");
+    request.AddHeader($"authorization", $"Bearer ");
     IRestResponse response = test.Execute(request);
 
     var jObject = JObject.Parse(response.Content);
