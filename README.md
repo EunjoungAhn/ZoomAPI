@@ -166,3 +166,23 @@ public JsonResult ZoomTest()
     return Json(result);
 }
 ```
+
+#Zoom api 회의 참여 기록 가져오는 code
+```C#
+[Route("Api/ZoomTest")]
+public JsonResult ZoomTest()
+{
+    var result = new ReturnValue();
+    //회의 기록 가져오기 - get 형식
+    var zoomTest = "https://api.zoom.us/v2/report/meetings/{meetingId}/participants";// 3월19일 회의 기록
+    var test = new RestClient(zoomTest);
+    var request = new RestRequest(Method.GET);
+    request.AddHeader("content-type", "application/json");
+    request.AddHeader($"authorization", $"Bearer "");
+    IRestResponse response = test.Execute(request);
+
+    var jObject = JObject.Parse(response.Content);
+    Logger.Current.Debug($"jObject : {jObject}");
+    return Json(result);
+}
+```
