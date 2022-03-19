@@ -153,7 +153,7 @@ public JsonResult ZoomTest()
     var token = tokenHandler.CreateToken(tokenDescriptor);
     var tokenString = tokenHandler.WriteToken(token);
 
-    var zoomTest = "https://api.zoom.us/v2/accounts/{accountId}/report/meetings/{meetingId}/participants";
+    var zoomTest = "https://api.zoom.us/v2/users/{userID}";//To find your master account ID
     var request = new RestRequest(Method.GET);
     request.AddHeader("content-type", "application/json");
     request.AddHeader($"authorization", $"Bearer {tokenString}");
