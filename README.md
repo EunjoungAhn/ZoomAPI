@@ -86,3 +86,52 @@ public JsonResult ZoomMeetingCreateUpdate(string LectureSeq, string AccountSeq, 
     return Json(zoomResult);
 }
 ```
+
+
+#Zoom api Personal Test code
+```C#
+[Route("Api/ZoomTest")]
+public JsonResult ZoomTest()
+{
+    var result = new ReturnValue();
+    //zoom 회의 참석자 기록 가져오기
+    /*
+    var participants = "https://api.zoom.us/report/meetings/" + zoomId + "/participants";
+    var ParticipantsRequest = new RestRequest(Method.GET);
+    Logger.Current.Debug($"JParticipants : {JParticipants}");
+    */
+
+
+    //회의 기록 관련 Test
+
+    //토큰 만들기
+
+    var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+    var now = DateTime.UtcNow;
+    var apiSecret = "x041Y6ifuyrPrVkmzauay1ORhR4ekAQRJpeg";//lsk
+    byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
+    var tokenDescriptor = new SecurityTokenDescriptor
+    {
+        //App credentials > API Key 값 입니다.
+        //Issuer = "R9pXOmNLR7K_b4ecxM1gCg",//개발자
+        //Issuer = "F-XcKOD7QbaiSOPUbzLrBA",//ej
+        Issuer = "v0vTy-YqSx-Xtvb8QAFJzA",//lsk
+        Expires = now.AddSeconds(300),
+        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256),
+    };
+    var token = tokenHandler.CreateToken(tokenDescriptor);
+    var tokenString = tokenHandler.WriteToken(token);
+
+    var zoomTest = new RestClient("https://api.zoom.us/v2/accounts/cloud0301@lskorea.org/report/activities");
+    var request = new RestRequest(Method.GET);
+    request.AddHeader("content-type", "application/json");
+    //request.AddHeader("authorization", "Bearer 39ug3j309t8unvmlmslmlkfw853u8");
+    request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
+    IRestResponse response = zoomTest.Execute(request);
+
+    var jObject = JObject.Parse(response.Content);
+    Logger.Current.Debug($"jObject : {jObject}");
+
+    return Json(result);
+}
+```
