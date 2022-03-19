@@ -108,25 +108,56 @@ public JsonResult ZoomTest()
 
     var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
     var now = DateTime.UtcNow;
-    var apiSecret = "x041Y6ifuyrPrVkmzauay1ORhR4ekAQRJpeg";//lsk
+    var apiSecret = "";
     byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
     var tokenDescriptor = new SecurityTokenDescriptor
     {
         //App credentials > API Key 값 입니다.
-        //Issuer = "R9pXOmNLR7K_b4ecxM1gCg",//개발자
-        //Issuer = "F-XcKOD7QbaiSOPUbzLrBA",//ej
-        Issuer = "v0vTy-YqSx-Xtvb8QAFJzA",//lsk
+        Issuer = "",//lsk
         Expires = now.AddSeconds(300),
         SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256),
     };
     var token = tokenHandler.CreateToken(tokenDescriptor);
     var tokenString = tokenHandler.WriteToken(token);
 
-    var zoomTest = new RestClient("https://api.zoom.us/v2/accounts/cloud0301@lskorea.org/report/activities");
+    var zoomTest = new RestClient("https://api.zoom.us/v2/accounts/{accountId}/report/activities");
     var request = new RestRequest(Method.GET);
     request.AddHeader("content-type", "application/json");
     //request.AddHeader("authorization", "Bearer 39ug3j309t8unvmlmslmlkfw853u8");
     request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
+    IRestResponse response = zoomTest.Execute(request);
+
+    var jObject = JObject.Parse(response.Content);
+    Logger.Current.Debug($"jObject : {jObject}");
+
+    return Json(result);
+}
+```
+
+#Zoom api user정보 가져오는 code
+```C#
+[Route("Api/ZoomTest")]
+public JsonResult ZoomTest()
+{
+    var result = new ReturnValue();
+    var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+    var now = DateTime.UtcNow;
+    var apiSecret = "";
+    byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
+    var tokenDescriptor = new SecurityTokenDescriptor
+    {
+        Issuer = "",
+        Expires = now.AddSeconds(300),
+        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256),
+    };
+    var token = tokenHandler.CreateToken(tokenDescriptor);
+    var tokenString = tokenHandler.WriteToken(token);
+
+    var zoomTest = "https://api.zoom.us/v2/accounts/{accountId}/report/meetings/{meetingId}/participants";
+    var request = new RestRequest(Method.GET);
+    request.AddHeader("content-type", "application/json");
+    request.AddHeader($"authorization", $"Bearer {tokenString}");
+    //request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
     IRestResponse response = zoomTest.Execute(request);
 
     var jObject = JObject.Parse(response.Content);
