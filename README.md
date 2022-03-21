@@ -1,4 +1,9 @@
 # ZoomAPI
+## Zoom은 Api와 SDK를 제공해줍니다. 좀 더 커스텀을 위해서는 SDK를 zoom market place에서 만들어서 키를 발급받아 진행하고, 또한 
+샘플 코드를 github에 제공하므로 참고하면 좋습니다.
+
+전 참고로 zoom api를 활용하여서 작업을 했습니다.
+
 C# zoom api, meeting create 관련
 
 ```C#
