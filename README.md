@@ -192,3 +192,41 @@ public JsonResult ZoomTest()
     return Json(result);
 }
 ```
+
+#Zoom api - Response :{“code”:124,“message”:“The Token can’t be used before.. 관련 에러 함수
+```C#
+public static string ZoomToken()
+{
+// Token will be good for 20 minutes
+DateTime Expiry = DateTime.UtcNow.AddMinutes(20);
+
+string ApiKey = ConfigurationManager.AppSettings["ClientIdJwt"];
+string ApiSecret = ConfigurationManager.AppSettings["ClientSecretJwt"];
+
+int ts = (int)(Expiry - new DateTime(1970, 1, 1)).TotalSeconds;
+
+// Create Security key  using private key above:
+var securityKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Encoding.UTF8.GetBytes(ApiSecret));
+
+// length should be >256b
+var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+//Finally create a Token
+var header = new JwtHeader(credentials);
+
+//Zoom Required Payload
+var payload = new JwtPayload
+{
+      { "iss", ApiKey},
+      { "exp", ts },
+};
+
+var secToken = new JwtSecurityToken(header, payload);
+var handler = new JwtSecurityTokenHandler();
+
+// Token to String so you can use it in your client
+var tokenString = handler.WriteToken(secToken);
+
+      return tokenString;
+}
+```
