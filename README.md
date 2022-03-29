@@ -230,3 +230,40 @@ var tokenString = handler.WriteToken(secToken);
       return tokenString;
 }
 ```
+
+#Zoom api - Response :{“code”:124,“message”:“The Token can’t be used before.. 관련 에러 해결 code -> JWT Token
+```C#
+    //바꾸어서 작동되는 JWT Token : S
+
+    // Token will be good for 20 minutes
+    DateTime Expiry = DateTime.UtcNow.AddMinutes(20);
+
+    string ApiKey = "v0vTy-YqSx-Xtvb8QAFJzA";
+    string ApiSecret = "x041Y6ifuyrPrVkmzauay1ORhR4ekAQRJpeg";
+
+    int ts = (int)(Expiry - new DateTime(1970, 1, 1)).TotalSeconds;
+
+    // Create Security key  using private key above:
+    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ApiSecret));
+
+    // length should be >256b
+    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+    //Finally create a Token
+    var header = new JwtHeader(credentials);
+
+    //Zoom Required Payload
+    var payload = new JwtPayload
+    {
+        { "iss", ApiKey},
+        { "exp", ts },
+    };
+
+    var secToken = new JwtSecurityToken(header, payload);
+    var handler = new JwtSecurityTokenHandler();
+
+    // Token to String so you can use it in your client
+    var tokenString = handler.WriteToken(secToken);
+
+    //바꾸어서 작동되는 JWT Token : E 
+```
