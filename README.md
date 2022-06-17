@@ -368,5 +368,125 @@ var tokenString = handler.WriteToken(secToken);
 
 #위의 전체적인 내용을 정리한 컨트롤러 코드
 ```C#
+namespace 프로젝트명.Core.WebUI
+{
+    public class ZoomController : DefaultController
+    {
 
+        public ZoomController(IActionContextAccessor accessor) : base(accessor)
+        {
+        }
+
+        //zoom 미팅 생성
+        [Route("Api/Create/Zoom/meeting")]
+        public JsonResult ZoomMeetingCreateUpdate(string LectureSeq, string AccountSeq, string LectureTitle, string UserId)
+        {
+            var result = new ReturnValue();
+            //zoom api로 받아오는 값을 담기 위한 zoom 전용 result class
+            var zoomResult = new ZoomResult();
+
+            if (this.IsLogin)
+            {
+                //NuGet Packages에서 System.IdentityModel.Tokens.Jwt를 받아 설치합니다.
+                //zoom에서는 OAuth 2.0과 JWT 2가지 인증이 있습니다. 그중 JWT로 인증을 받았습니다.
+
+                //20분 유효한 토큰 발행
+                DateTime Expiry = DateTime.UtcNow.AddMinutes(20);
+                
+                //Web.config key 값으로 DefaultController에 선언한 key값
+                string ApiKey = this.siteConfig.Zoom.ApiKey;
+		        string ApiSecret = this.siteConfig.Zoom.ApiSecret;
+
+		        int ts = (int)(Expiry - new DateTime(1970, 1, 1)).TotalSeconds;
+
+                //ApiSecret 키를 암호화
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ApiSecret));
+
+		        //길이는 256b 보다 크게
+		        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+		        //토큰 생성
+		        var header = new JwtHeader(credentials);
+
+		        //Zoom 필요로하는 Payload 설정
+		        var payload = new JwtPayload
+		        {
+			        { "iss", ApiKey},
+			        { "exp", ts },
+		        };
+
+		        var secToken = new JwtSecurityToken(header, payload);
+		        var handler = new JwtSecurityTokenHandler();
+
+                //사용자가 사용할 수 있도록 토큰을 문자열에 연결합니다.
+                var tokenString = handler.WriteToken(secToken);
+
+                //api를 쓰지 않고 빌드된 작업물에서 사용하는 api url 주소
+                var createZoom = "https://zoom.us/v2/users/"+ UserId + "/meetings"; 
+                var client = new RestClient(createZoom);
+
+                //미팅을 생성시에는 post로 보내야 합니다.
+                var request = new RestRequest(Method.POST);
+                request.RequestFormat = DataFormat.Json;
+
+                //교육 제목 변수
+                var lectureTitle = LectureTitle;
+                //Json으로 받을 값 지정 및 설정
+                //type=1은 공개, 2 = 암호가 필요한 방이 생성 됩니다.
+                request.AddJsonBody(new { topic = lectureTitle, duration = "20", start_time = DateTime.Now.ToString(), type = "2" });
+                //기본 형태
+                //request.AddHeader("authorization", "Bearer 39ug3j309t8unvmlmslmlkfw853u8");
+                //토큰 값을 지정하여 넣을 수 있도록, Format으로 추가하여 담기
+                request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
+                IRestResponse restResponse = client.Execute(request);
+
+                //값 받는 곳(옆 숫자 표시는, jObject에서 위에서 아래로 몇번에 위치하는지 표시)
+                var jObject = JObject.Parse(restResponse.Content);
+                var zoomId = (string)jObject["id"]; //2
+                var zoomEmail = (string)jObject["host_email"]; //4
+                var startUrl = (string)jObject["start_url"]; //12
+                var joinUrl = (string)jObject["join_url"]; //13
+                
+                //zoom에서 넘겨주는 json 값을 찍어 확인하는 로그입니다.
+                Logger.Current.Debug($"jObject : {jObject}");
+                
+                zoomResult.zoomId = zoomId;
+                zoomResult.zoomEmail = zoomEmail;
+                zoomResult.startUrl = startUrl;
+                zoomResult.joinUrl = joinUrl;
+
+                //zoom 테이블에 insert
+                result = this.Db.ZoomMeetingCreate(LectureSeq, AccountSeq, zoomResult);
+                //zoom api로 넘겨 받은 joson값에 추가가 안되어 따로 변수 설정하여 Json에 담아서 넘기기 
+                zoomResult.check = result.Check;
+                zoomResult.message = result.Message;
+            }
+            else
+            {
+                result.Error("로그인 후 이용해 주세요.");
+            }
+            return Json(zoomResult);
+        }
+
+        //zoom 유저 출석
+        [Route("Api/Zoom/Join")]
+        public JsonResult ZoomJoinInsert(long ZoomSeq)
+        {
+            var result = new ReturnValue();
+
+            if (this.IsLogin)
+            {
+                result = this.Db.ZoomJoinInsert(ZoomSeq, this.account.AccountSeq);
+
+            }
+            else
+            {
+                result.Error("로그인 후 이용하세요.");
+            }
+
+            return Json(result);
+        }
+
+    }//class
+}
 ```
