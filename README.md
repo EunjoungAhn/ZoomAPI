@@ -174,6 +174,8 @@ public JsonResult ZoomTest()
 ```
 
 #Zoom api 회의 참여 기록 가져오는 code
+#zoom은 api로 보내는 파라미터 주소마다 가져올 수 있는 정보가 다양하다.(개발자 사이트를 참고해야한다.)
+https://marketplace.zoom.us/docs/api-reference/zoom-api/methods/#operation/meetingCreate
 ```C#
 [Route("Api/ZoomTest")]
 public JsonResult ZoomTest()
@@ -190,6 +192,86 @@ public JsonResult ZoomTest()
     var jObject = JObject.Parse(response.Content);
     Logger.Current.Debug($"jObject : {jObject}");
     return Json(result);
+    
+    //회의 기록 관련 Test
+
+            //토큰 만들기
+
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var now = DateTime.UtcNow;
+            var apiSecret = this.siteConfig.Zoom.ApiSecret;//lsk
+            byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                //App credentials > API Key 값 입니다.
+                //Issuer = "R9pXOmNLR7K_b4ecxM1gCg",//개발자
+                //Issuer = "F-XcKOD7QbaiSOPUbzLrBA",//ej
+                Issuer = this.siteConfig.Zoom.ApiKey,//lsk
+                Expires = now.AddSeconds(300),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256),
+            };
+
+            //JWT token
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            //사용자 정보 가져오기
+            //var zoomTest = "https://api.zoom.us/v2/users/cloud0301@lskorea.org";//To find your master account ID - get 형식
+
+            //회의 개설하기 - post형식
+            //var zoomTest = "https://api.zoom.us/v2/users/cloud0301@lskorea.org/meetings";
+
+            //가지고 오고자하는 회의 ID(meetingId) = 914 6206 2885, account_id:  = "Js-CW9dASA-SBQSWRIn6gQ"
+            //Get meeting detail reports - get형식
+            //var zoomTest = "https://api.zoom.us/v2/accounts/{accountId}/report/meetings/{meetingId}";
+
+            //Get meeting participant reports - get형식
+            //var zoomTest = "https://api.zoom.us/v2/accounts/{accountId}/report/meetings/{meetingId}/participants";
+            //var zoomTest = "https://api.zoom.us/v2/accounts/Js-CW9dASA-SBQSWRIn6gQ/report/meetings/91462062885/participants";
+
+            //Get sign In / sign out activity report - get형식
+            //var zoomTest = "https://api.zoom.us/v2/accounts/{accountId}/report/activities";
+            //var zoomTest = "https://api.zoom.us/v2/accounts/Js-CW9dASA-SBQSWRIn6gQ/report/activities";
+            
+            //회의 기록 가져오기 - get 형식
+            var zoomTest = "https://api.zoom.us/v2/report/meetings/91462062885/participants";//[초급] 생존수영, 3월19일 회의 기록
+            //var zoomTest = "https://api.zoom.us/v2/report/meetings/7545631159/participants";//3월 19일 70명분  개인 회의 실: 7** 5** 1***
+
+            var test = new RestClient(zoomTest);
+            var request = new RestRequest(Method.GET);
+            //var request = new RestRequest(Method.POST);//미팅 개설 때 post 사용
+            request.AddHeader("content-type", "application/json");
+            //request.AddJsonBody(new { topic = "Test", duration = "20", start_time = DateTime.Now.ToString(), type = "1" });
+            //request.AddJsonBody(new { topic = "Test"});
+            request.AddHeader($"authorization", $"Bearer {tokenString}");
+            //request.AddHeader($"authorization", $"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOm51bGwsImlzcyI6InYwdlR5LVlxU3gtWHR2YjhRQUZKekEiLCJleHAiOjE2NDc3MDYyMjUsImlhdCI6MTY0NzcwMDgyNX0.qPvlaNLD9Z9WrncGabSQrCDGoxXVtfpHyVyRDLJaxAc");
+            //request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
+            IRestResponse response = test.Execute(request);
+            
+            var jObject = JObject.Parse(response.Content);
+            //Logger.Current.Debug($"jObject : {jObject}");
+            Logger.Current.Debug($"jObject : {jObject["total_records"]}");//모든 접속 기록
+            Logger.Current.Debug($"jObject : {jObject["participants"][0]}");
+
+            /*
+            Logger.Current.Debug($"jObject : {jObject["participants"][0]["join_time"]}"); //5
+            Logger.Current.Debug($"jObject : {jObject["participants"][0]["leave_time"]}"); //6
+            Logger.Current.Debug($"jObject : {jObject["participants"][0]["duration"]}"); //7
+            */
+
+            /*
+            var totalRecords = (int)jObject["total_records"]; // 모든 접속 기록
+
+            for (int i = 0; i < totalRecords; i++)
+            {
+                Logger.Current.Debug($"jObject : {jObject["participants"][i]["join_time"]}"); //5
+                Logger.Current.Debug($"jObject : {jObject["participants"][i]["leave_time"]}"); //6
+                Logger.Current.Debug($"jObject : {jObject["participants"][i]["duration"]}"); //7
+            }
+            */
+
+            result.Check = true;
+            return Json(result);
 }
 ```
 
@@ -266,4 +348,25 @@ var tokenString = handler.WriteToken(secToken);
     var tokenString = handler.WriteToken(secToken);
 
     //바꾸어서 작동되는 JWT Token : E 
+```
+
+#zoom 데이터를 get, set할 라이브러리
+```C#
+    namespace 프로젝트명.Core.Library
+{
+    public class ZoomResult
+    {
+        public string zoomId { get; set; }
+        public string zoomEmail { get; set; }
+        public string startUrl  { get; set; }
+        public string joinUrl  { get; set; }
+        public bool check { get; set; }
+        public string message { get; set; }
+    }
+}
+```
+
+#위의 전체적인 내용을 정리한 컨트롤러 코드
+```C#
+
 ```
