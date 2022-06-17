@@ -350,7 +350,7 @@ var tokenString = handler.WriteToken(secToken);
     //바꾸어서 작동되는 JWT Token : E 
 ```
 
-#zoom 데이터를 get, set할 라이브러리
+#zoom 데이터를 get, set할 라이브러리 (zoom api로 넘겨 받은 joson값에 추가가 안되어 따로 변수 설정하여 Json에 담아서 넘기기 위해 작성)
 ```C#
     namespace 프로젝트명.Core.Library
 {
